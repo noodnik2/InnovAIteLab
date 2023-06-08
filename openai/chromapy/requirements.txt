@@ -1,0 +1,4 @@
+openai==0.27.4
+openai-cli==0.0.3
+jupyterlab==3.6.3
+chromadb==0.3.21

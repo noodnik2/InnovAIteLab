@@ -1,0 +1,21 @@
+{
+  "name": "oatscli",
+  "description": "OpenAI API Typescript CLI",
+  "license": "MIT",
+  "version": "1.0.0",
+  "keywords": [],
+  "author": "noodnik2",
+  "bin": "dist/index.js",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "openai": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "typescript": "^5.0.4"
+  }
+}

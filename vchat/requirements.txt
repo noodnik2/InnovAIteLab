@@ -1,0 +1,8 @@
+speechrecognition == 3.10.0
+pyaudio == 0.2.11
+macos_speech == 1.1.0
+openai-whisper == 20230314
+soundfile==0.12.1
+openai==0.27.4
+python-dotenv==1.0.0
+pocketsphinx==5.0.0

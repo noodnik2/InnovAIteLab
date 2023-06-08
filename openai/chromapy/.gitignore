@@ -1,0 +1,4 @@
+.conda
+.chroma
+.ipynb_checkpoints
+persist-directory
