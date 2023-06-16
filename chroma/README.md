@@ -9,7 +9,7 @@ $ pip install -r requirements.txt
 
 2. Start the `chromadb` service
 ```shell
-$ (cd ~/repos/chroma-core/chroma; docker-compose -d up)
+$ (cd ~/repos/chroma-core/chroma; docker-compose up -d)
 ```
 
 3. Add some data
