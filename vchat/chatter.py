@@ -1,5 +1,6 @@
 from macos_speech import Synthesizer
 import speech_recognition as sr
+import openai
 from dotenv import dotenv_values
 import signal
 import os
@@ -26,6 +27,7 @@ class VoiceChatter:
         # See: https://support.apple.com/en-us/HT206175 or execute command in MacOs: "say -v \?"
         "en-US": "Agnes",
         "he": "Carmit",
+        "he-IL": "Carmit",
         "fr": "Thomas",
         "es": "Monica",
         "de": "Anna"
@@ -55,11 +57,11 @@ class VoiceChatter:
         # - https://github.com/Uberi/speech_recognition
         #
         self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 4000
-        self.recognizer.dynamic_energy_threshold = True
-        self.recognizer.dynamic_energy_adjustment_damping = 0.15
-        self.recognizer.dynamic_energy_adjustment_ratio = 1.5
-        self.recognizer.pause_threshold = 0.8
+        # self.recognizer.energy_threshold = 4000
+        # self.recognizer.dynamic_energy_threshold = True
+        # self.recognizer.dynamic_energy_adjustment_damping = 0.15
+        # self.recognizer.dynamic_energy_adjustment_ratio = 1.5
+        # self.recognizer.pause_threshold = 0.8
 
         mic = sr.Microphone()
         with mic as source:
@@ -68,13 +70,15 @@ class VoiceChatter:
         signal.signal(signal.SIGINT, self.signal_handler)
 
         # Set initial defaults - preferably an interpreter that can run offline
-        self.set_interpreter([VoiceChatter.WHISPER_SRE])
+        # self.set_interpreter([VoiceChatter.WHISPER_SRE])
+        self.set_interpreter([VoiceChatter.WHISPERAPI_SRE])
+        # self.set_interpreter([VoiceChatter.GOOGLE_SRE])
         self.set_language("english")
 
         print("conversation started")
 
         self.print_help()
-        self.process_text("Hello!")
+        # self.process_text("Hello!")
         if synchronous:
             # Synchronous: actively participate in the conversation, looping for each message
             while not self.stop_flag:
@@ -209,10 +213,11 @@ class VoiceChatter:
         return None
 
     def process_text(self, text):
-        print(f'{self.speaker}: {text}')
+        answer, role = vc.ask_chatgpt(text)
+        print(f'{self.speaker} (as {role}): {answer}')
         speaker = Synthesizer()
         speaker.voice = self.speaker
-        speaker.say(text)
+        speaker.say(answer)
 
     def set_language(self, new_language_raw):
         new_language_clean = "".join(new_language_raw).lower().strip(" .")
@@ -236,6 +241,22 @@ class VoiceChatter:
             return False
         self.interpreter = new_interpreter
         return True
+
+    def ask_chatgpt(self, question):
+        openai.api_key = VoiceChatter.CONFIG["OPENAI_API_KEY"]
+        print(f'Asking ChatGPT (as user): {question}')
+        response = openai.ChatCompletion.create(
+            # model="gpt-3.5-turbo",
+            model="gpt-4",
+            temperature=0.05,
+            messages=[
+                {"role": "user", "content": question},
+            ]
+        )
+        chatgpt_response_message = response["choices"][0]["message"]
+        answer = chatgpt_response_message["content"]
+        role = chatgpt_response_message["role"]
+        return answer, role
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.backdrop {
+    height: 95vh;
+    background-image:
+            linear-gradient(
+                    to right bottom,
+                    rgba(250, 253, 247, 0.99),
+                    rgba(171, 189, 183, 0.95)),
+            url(/thumb.jpg);
+    background-size: cover;
+    background-position: top;
+    position: relative;
+}

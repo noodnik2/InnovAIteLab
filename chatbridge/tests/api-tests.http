@@ -1,0 +1,6 @@
+
+### Try out the consumer proxy
+
+GET http://localhost:3000/api/consume?model=gpt-3.5-turbo
+Accept: text/event-stream
+Connection: keep-alive
