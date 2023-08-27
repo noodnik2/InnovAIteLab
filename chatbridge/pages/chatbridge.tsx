@@ -2,21 +2,20 @@ import React, {useState} from 'react';
 import Head from "next/head";
 import {logEntry} from "@/components/CommonProps";
 import LogWindow from "@/components/LogWindow";
-import MessageProducer from "@/components/MessageProducer";
-import MessageConsumer from "@/components/MessageConsumer";
+import ChatBox from "@/components/ChatBox";
 import axios from "axios";
 
-const Consumer = (): JSX.Element => {
+const ChatBridge = (): JSX.Element => {
 
-    const knownModels = ['gpt-4', 'gpt-3.5-turbo']
-    const initialModel = 'gpt-4';
+    const knownModels = ['gpt-3.5-turbo', 'gpt-4']
+    const initialModel = knownModels[0];
 
     const [currentModel, setCurrentModel] = useState(initialModel)
     const [statusText, setStatusText] = useState([] as string[])
-    const [messageText, setMessageText] = useState([] as string[])
+    const [queryText, setQueryText] = useState([] as string[])
 
-    const updateMessage = (messageUpdate: string) => {
-        setMessageText(currentMessage => [...currentMessage, logEntry(messageUpdate)]);
+    const updateQuery = (queryUpdate: string) => {
+        setQueryText(currentQuery => [...currentQuery, logEntry(queryUpdate)]);
     }
 
     const updateStatus = (statusUpdate: string) => {
@@ -25,7 +24,7 @@ const Consumer = (): JSX.Element => {
 
     const submitQuery = (message: string) => {
 
-        const payload = {
+        const queryPayload = {
             model: currentModel,
             message: message,
             key: new Date().toISOString(),
@@ -37,13 +36,13 @@ const Consumer = (): JSX.Element => {
             }
         }
 
-        updateStatus(`${payload.model}: ${payload.message}`)
-        const jsonPayload = JSON.stringify(payload);
-        axios.post(`/api/outbox`, jsonPayload, headers)
+        updateStatus(`${queryPayload.model}: ${queryPayload.message}`)
+        const queryPayloadJson = JSON.stringify(queryPayload);
+        axios.post(`/api/resolver`, queryPayloadJson, headers)
             .then((response) => {
                 const answer = JSON.stringify(response.data);
                 updateStatus(`answer received(${answer})`);
-                updateMessage(JSON.parse(JSON.stringify(response.data.data)));
+                updateQuery(JSON.parse(JSON.stringify(response.data.data)));
             })
             .catch((error) => updateStatus(`delivery failure: ${error}`));
 
@@ -55,12 +54,21 @@ const Consumer = (): JSX.Element => {
         );
     }
 
-    const textAreaClassName = "p-2 overflow-y-auto w-full h-24 min-h-full"
+    const title2 = (text: string) => {
+        return (
+            <h1 className="p-2 text-xl decoration-2 font-bold">{text}</h1>
+        );
+    }
+
+    const textAreaClassName = `p-2 overflow-y-auto w-full min-h-full`
+    const statusBoxClassName = `${textAreaClassName} h-12`
+    const queryBoxClassName = `${textAreaClassName} h-24`
+    const responseBoxClassName = `${textAreaClassName} h-36`
 
     return (
         <main className="flex items-center justify-around font-sans">
             <Head>
-                <title>Consumer</title>
+                <title>Chat Bridge</title>
             </Head>
 
             <div className="p-2 m-5 w-full shadow-2xl drop-shadow-lg space-y-3">
@@ -69,16 +77,16 @@ const Consumer = (): JSX.Element => {
                     <LogWindow
                         loggerText={statusText}
                         loggerDescription="Consumer status updates"
-                        textAreaClassName={textAreaClassName}
+                        textAreaClassName={statusBoxClassName}
                     />
                 </div>
                 <div className="border-2 border-black bg-blue-50">
-                    {title("Chat")}
+                    {title("Chat Bridge")}
                     <div className="box-border border-dashed border-2">
-                        <MessageProducer
+                        <ChatBox
                             knownModels={knownModels}
                             model={currentModel}
-                            textAreaClassName={textAreaClassName}
+                            textAreaClassName={queryBoxClassName}
                             onModel={model => {
                                 setCurrentModel(model)
                                 updateStatus(`model set to "${model}"`)
@@ -87,10 +95,14 @@ const Consumer = (): JSX.Element => {
                         />
                     </div>
                     <div className="box-border border-dashed border-2">
-                        <MessageConsumer
-                            textAreaClassName={textAreaClassName}
-                            consumerText={messageText}
-                        />
+                        {title2("Response")}
+                        <div>
+                            <LogWindow
+                                loggerText={queryText}
+                                textAreaClassName={responseBoxClassName}
+                                loggerDescription="Chat Response(s)"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,4 +111,4 @@ const Consumer = (): JSX.Element => {
     );
 };
 
-export default Consumer;
+export default ChatBridge;

@@ -1,7 +1,7 @@
-import Consumer from "@/pages/consumer";
+import ChatBridge from "@/pages/chatbridge";
 
 export default function Home() {
     return (
-        <Consumer />
+        <ChatBridge />
     );
 }

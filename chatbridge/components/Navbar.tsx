@@ -8,7 +8,7 @@ import { Fragment } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 
 const navigation = [
-    { name: 'Consumer', href: '/consumer', current: true },
+    { name: 'ChatBridge', href: '/chatbridge', current: true },
     { name: 'About', href: '/about', current: false },
 ]
 
@@ -67,10 +67,10 @@ export default function Navbar() {
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <Link
-                                                    href="/consumer"
+                                                    href="/chatbridge"
                                                     className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
                                                 >
-                                                    Consumer
+                                                    ChatBridge
                                                 </Link>
                                             )}
                                         </Menu.Item>

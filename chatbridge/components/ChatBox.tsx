@@ -4,14 +4,14 @@ import SingleSelector from "@/components/SingleSelector";
 import {TextAreaProps} from "@/components/CommonProps";
 import { TbArrowBigRightLines } from 'react-icons/tb';
 
-interface MessageProducerProps extends TextAreaProps {
+interface ChatBoxProps extends TextAreaProps {
     knownModels?: string[]
     model: string
     onMessage: (message: string) => void
     onModel: (model: string) => void
 }
 
-const MessageProducer = ({textAreaClassName = "", knownModels = [], model, onMessage, onModel}: MessageProducerProps): JSX.Element => {
+const ChatBox = ({textAreaClassName = "", knownModels = [], model, onMessage, onModel}: ChatBoxProps): JSX.Element => {
 
     const [message, setMessage] = useState('')
 
@@ -35,16 +35,14 @@ const MessageProducer = ({textAreaClassName = "", knownModels = [], model, onMes
                     />
                 </span>
             </span>
-            <div>
                 <textarea
                     className={textAreaClassName}
                     placeholder="Enter the text to send to the selected model here"
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                 />
-            </div>
         </div>
     );
 };
 
-export default MessageProducer;
+export default ChatBox;

@@ -4,3 +4,27 @@
 GET http://localhost:3000/api/consume?model=gpt-3.5-turbo
 Accept: text/event-stream
 Connection: keep-alive
+
+### Post a fact to memory
+
+POST http://localhost:3000/api/collector
+Content-Type: application/json
+
+{
+    "model": "gpt-3.5-turbo",
+    "temperature": 0.9,
+    "message": "A Schnidlegogo is a very particular form of freezer, in which the ice turns to stone."
+}
+
+### Post another fact to memory
+
+POST http://localhost:3000/api/collector
+Content-Type: application/json
+
+{
+  "model": "gpt-3.5-turbo",
+  "temperature": 0.9,
+  "message": "My name is Iota."
+}
+
+
