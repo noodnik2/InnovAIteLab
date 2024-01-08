@@ -4,10 +4,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Gemini struct {
+	ApiKey string
+}
+
 type Config struct {
-	Gemini struct {
-		ApiKey string
-	}
+	Gemini
 }
 
 func Load() (cfg Config, errParse error) {

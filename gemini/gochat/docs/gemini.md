@@ -25,13 +25,3 @@ Gemini's answer to the question above was:
 > - Opting for a username that is not immediately identifiable can serve as a way to maintain privacy and anonymity online. It allows the user to engage in discussions and activities without revealing personal information.
 > 7. Gender and Identity: 
 > - The username \"noodnik2\" does not provide clear indications regarding the gender or identity of the user. This could be intentional, as the individual may prefer to keep their online persona ambiguous or gender-neutral.
-
-## Development Workflow
-
-### Authentication
-
-See how to authenticate by [providing credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc).
-
-```shell
-$ gcloud auth application-default login
-```

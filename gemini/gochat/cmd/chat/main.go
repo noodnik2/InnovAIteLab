@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/noodnik2/InnovAteLab/gemini/gochat/config"
@@ -17,22 +19,59 @@ func main() {
 		panic(cfgErr)
 	}
 
-	ctx := context.Background()
-
-	// Access your API key as an environment variable (see "Set up your API key" above)
-	gc, gcErr := genai.NewClient(ctx, option.WithAPIKey(cfg.Gemini.ApiKey))
-	if gcErr != nil {
-		panic(gcErr)
+	c, chiErr := newChatter(cfg.Gemini)
+	if chiErr != nil {
+		panic(chiErr)
 	}
-	defer func() { _ = gc.Close() }()
 
-	// For text-and-image input (multimodal), use the gemini-pro-vision model
-	// For text-only input, use the gemini-pro model
+	defer func() { _ = c.Close() }()
+	s := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Ask me anything: ")
+	for {
+		fmt.Print("> ")
+		s.Scan()
+		input := s.Text()
+
+		if input == "exit" {
+			fmt.Println("Goodbye!")
+			break
+		}
+
+		if tqErr := c.makeSynchronousTextQuery(input); tqErr != nil {
+			panic(tqErr)
+		}
+	}
+
+	fmt.Println("Bye bye!")
+}
+
+func newChatter(gcfg config.Gemini) (*chatter, error) {
+	ctx := context.Background()
+	gc, gcErr := genai.NewClient(ctx, option.WithAPIKey(gcfg.ApiKey))
+	if gcErr != nil {
+		return nil, nil
+	}
+
 	model := gc.GenerativeModel("gemini-pro")
 
-	prompt := genai.Text("Tell me who you are in no more than 5 sentences.")
 	cs := model.StartChat()
-	iter := cs.SendMessageStream(ctx, prompt)
+
+	return &chatter{ctx: ctx, gc: gc, cs: cs}, nil
+}
+
+type chatter struct {
+	gc  *genai.Client
+	cs  *genai.ChatSession
+	ctx context.Context
+}
+
+func (c *chatter) Close() error {
+	return c.gc.Close()
+}
+
+func (c *chatter) makeSynchronousTextQuery(input string) error {
+	iter := c.cs.SendMessageStream(c.ctx, genai.Text(input))
 
 	for {
 		resp, errNext := iter.Next()
@@ -40,15 +79,16 @@ func main() {
 			break
 		}
 		if errNext != nil {
-			panic(errNext)
+			return errNext
 		}
 
 		for _, candidate := range resp.Candidates {
 			for _, part := range candidate.Content.Parts {
-				fmt.Printf("%s", part) //nolint:forbidigo
+				fmt.Printf("%s", part)
 			}
 		}
 	}
 
-	fmt.Println() //nolint:forbidigo
+	fmt.Println()
+	return nil
 }
