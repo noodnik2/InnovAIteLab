@@ -13,6 +13,7 @@ run-chat:
 ## lint - lint all of the go source
 lint:
 	golangci-lint run
+	#go run -mod=mod github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 ## setup-lint - install go install the linter
 setup-lint:

@@ -1,6 +1,8 @@
 module github.com/noodnik2/InnovAteLab/gemini/gochat
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/google/generative-ai-go v0.5.0
