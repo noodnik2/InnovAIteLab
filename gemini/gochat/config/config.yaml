@@ -2,3 +2,4 @@
 
 Gemini:
   ApiKey: YOUR_GEMENI_API_KEY
+  Model: gemini-pro # see https://ai.google.dev/models

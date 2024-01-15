@@ -27,6 +27,8 @@ func main() {
 	defer func() { _ = c.Close() }()
 	s := bufio.NewScanner(os.Stdin)
 
+	fmt.Printf("Using model: %s\n", c.model)
+	fmt.Println("Type 'exit' to quit")
 	fmt.Println("Ask me anything: ")
 	for {
 		fmt.Print("> ")
@@ -53,16 +55,15 @@ func newChatter(gcfg config.Gemini) (*chatter, error) {
 		return nil, nil
 	}
 
-	model := gc.GenerativeModel("gemini-pro")
+	cs := gc.GenerativeModel(gcfg.Model).StartChat()
 
-	cs := model.StartChat()
-
-	return &chatter{ctx: ctx, gc: gc, cs: cs}, nil
+	return &chatter{ctx: ctx, gc: gc, cs: cs, model: gcfg.Model}, nil
 }
 
 type chatter struct {
 	gc  *genai.Client
 	cs  *genai.ChatSession
+	model string
 	ctx context.Context
 }
 

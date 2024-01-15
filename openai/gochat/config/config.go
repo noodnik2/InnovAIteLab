@@ -4,13 +4,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Gemini struct {
+type Openai struct {
 	ApiKey string
 	Model  string
 }
 
 type Config struct {
-	Gemini
+	Openai
 }
 
 func Load() (cfg Config, errParse error) {
