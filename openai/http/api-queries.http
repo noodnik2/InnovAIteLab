@@ -1,0 +1,5 @@
+#
+
+# get a list of current models available
+GET https://api.openai.com/v1/models
+Authorization: Bearer {{OPENAI_API_KEY}}
