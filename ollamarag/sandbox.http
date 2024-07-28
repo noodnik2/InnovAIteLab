@@ -1,0 +1,12 @@
+###
+
+# Ollama API: Ensure the Ollama server is correctly set up and the API endpoint
+GET http://localhost:8000/generate
+
+###
+# Chroma API
+GET http://localhost:8080
+
+###
+GET http://127.0.0.1:11434/api/generate
+

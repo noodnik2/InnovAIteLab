@@ -1,0 +1,12 @@
+name: ollamarag
+channels:
+  - conda-forge
+  - anaconda
+dependencies:
+  - python=3.8
+  - sentence-transformers=2.2.2
+  - chromadb=0.3.23
+  - requests=2.25.1
+  - pip
+  - pip:
+      - pydantic-settings
