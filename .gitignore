@@ -1,6 +1,4 @@
-.DS_Store
-bard
-logmind
-logmind-go
-chatbridge
-chroma/js
+node_modules/
+.next/
+__pycache__/
+.env*
