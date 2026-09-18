@@ -1,0 +1,53 @@
+# docker-compose.yml
+# Complete local Docker setup for tokenization system
+# No cloud dependencies - runs entirely on localhost
+
+services:
+  # Redis for job queue and state management
+  redis:
+    image: redis:7-alpine
+    container_name: tokenization-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - tokenization-network
+
+  # Main API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tokenization-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/uploads:/data/uploads
+      - ./data/chroma:/data/chroma
+      - ./app:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - tokenization-network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  tokenization-network:
+    driver: bridge
+
