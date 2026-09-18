@@ -1,0 +1,32 @@
+# requirements.txt
+# All dependencies for local document processing
+
+# FastAPI and server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.9
+
+  # LangChain ecosystem
+langchain==0.1.6
+langchain-community==0.0.19
+
+  # Document loaders
+#unstructured==0.12.4
+unstructured
+markdown
+pypdf==4.0.1
+docx2txt==0.8
+python-magic==0.4.27
+
+  # Text processing
+tiktoken==0.6.0
+
+  # ChromaDB
+chromadb==0.4.22
+
+  # Redis
+redis==5.0.1
+
+  # Utilities
+pydantic==2.6.0
+python-dateutil==2.8.2

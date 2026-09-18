@@ -1,0 +1,20 @@
+# .dockerignore
+# Files to exclude from Docker build
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.git
+.gitignore
+.vscode
+.idea
+*.md
+data/
+.env
+*.log
