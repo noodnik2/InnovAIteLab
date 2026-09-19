@@ -17,3 +17,4 @@ Explore the various sub-folders for details on each subproject or initiative.
 - [Pi Agent Harness](https://github.com/earendil-works/pi#pi-agent-harness)
 - [Future AGI](https://futureagi.com/) - e2e agent engineering and optimization
   platform ([GitHub]( https://github.com/future-agi)))
+- [Claude Architect Domain Lessons](https://gist.github.com/tvytlx/2e0c4c823e56e1ddcce8f0634d1f36e6)
