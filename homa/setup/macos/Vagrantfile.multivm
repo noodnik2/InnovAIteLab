@@ -1,0 +1,32 @@
+Vagrant.configure("2") do |config|
+  # Global configuration applied to both machines
+  config.vm.box = "ubuntu/jammy64" # Stable Ubuntu 22.04 LTS
+
+  # 1. HOMA SERVER CONFIGURATION
+  config.vm.define "homa-server" do |server|
+    server.vm.hostname = "homa-server"
+
+    # Create a private network with a static IP
+    server.vm.network "private_network", ip: "192.168.56.10"
+
+    # Allocate system resources
+    server.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+  end
+
+  # 2. HOMA CLIENT CONFIGURATION
+  config.vm.define "homa-client" do |client|
+    client.vm.hostname = "homa-client"
+
+    # Create a private network with a different static IP on the same subnet
+    client.vm.network "private_network", ip: "192.168.56.11"
+
+    # Allocate system resources
+    client.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+  end
+end
