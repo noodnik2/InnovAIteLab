@@ -14,8 +14,11 @@ dynamically load arbitrary custom kernel modules (like Homa) into Docker Desktop
 give us a low-touch, single-command environment directly on a Mac, a solution is to spin up an explicit Linux VM
 using Vagrant or Multipass first, or use a Docker-in-Docker setup.
 
-A reliable and "ready-made" approach for a Mac user is using Multipass (Ubuntu's official, hyper-fast VM manager
-for Mac) to create a Linux node where we can then run Docker with full kernel privileges.
+A "ready-made" approach for a Mac user is using [Multipass] (Ubuntu's official, hyper-fast VM manager for Mac) to
+create a Linux node where we can then run Docker with full kernel privileges.  However, initial experience trying
+to use Multipass has been frustrating, so alternatives have been explored.  The alternative which was successful uses
+"Vagrant", as outlined below.  Other alternatives worth consideration include [Lima], [Colima], [UTM] and [OrbStack];
+though, these have not been tried as of this writing.
 
 ## Step 1: Create a Homa-capable Linux Environment
 
@@ -101,3 +104,9 @@ $ docker run --rm --net=host grpc-homa-demo /path/to/compiled/client_binary --se
 
 - _Note: Because Homa requires raw socket mapping and kernel module hooks, passing `--net=host` to
   Docker ensures the containers talk directly through the VM kernel where you loaded `homa.ko`._
+
+[Multipass]: https://canonical.com/multipass
+[Lima]: https://lima-vm.io/
+[Colima]: https://colima.run/
+[UTM]: https://mac.getutm.app/
+[OrbStack]: https://orbstack.dev/
