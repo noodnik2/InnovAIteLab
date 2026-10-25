@@ -36,6 +36,10 @@ Example prompts:
   override it with `SONOS_APPLE_MUSIC_SN`.
 - **"Current playlist" means the room's Sonos queue.** If a room is playing radio, AirPlay, or Spotify Connect,
   adding to the queue isn't audible. The tool says so, and `mode: "now"` switches the room to its queue and plays.
+- **`mode: "now"` confirms playback before reporting success.** Sonos accepts Play even for a track it can't load
+  (e.g. a library file on an unreachable share), then silently skips ahead or stops. The tool polls for up to 4 seconds
+  and reports `playingNow: true` only once the room is actually playing the new track; otherwise it explains what
+  happened. The failed entry stays in the queue.
 - **Commands go to the group coordinator**, so naming any speaker in a group works.
 - **The server is stateless.** It reads group topology fresh on every call and never subscribes to Sonos events, so it
   opens no listening ports. The only state it keeps is a small in-memory cache of recent search results, which supplies

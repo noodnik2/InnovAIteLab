@@ -74,6 +74,8 @@ export interface TrackHints {
 export interface ServiceDeps {
   config: Pick<Config, 'defaultRoom' | 'appleMusicSerial'>;
   searchCatalog: (query: string, limit: number) => Promise<CatalogSong[]>;
+  /** Waits between playback checks; injectable so tests needn't wait. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 interface CachedItem extends SearchResult {
@@ -81,6 +83,12 @@ interface CachedItem extends SearchResult {
 }
 
 const RESULT_CACHE_LIMIT = 500;
+
+/** After "now" playback starts, poll this often, this many times, to confirm the track is really playing. */
+const PLAY_CHECK_INTERVAL_MS = 500;
+const PLAY_CHECK_ATTEMPTS = 8;
+
+const defaultSleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const STATE_MAP: Record<string, PlayState> = {
   PLAYING: 'playing',
@@ -287,13 +295,39 @@ export class SonosService {
     if (mode === 'now') {
       await this.gateway.seekTrack(player, added.firstTrackNumber);
       await this.gateway.play(player);
-      outcome.playingNow = true;
+      const problem = await this.confirmPlaying(player, added.firstTrackNumber, uri);
+      outcome.playingNow = problem === undefined;
+      if (problem) outcome.note = problem;
     } else if (!onQueue) {
       outcome.note =
         `${group.name} is playing from ${describeSource(source)}, not its queue, so this track ` +
         `won't be heard until playback switches to the queue (use mode "now" to switch and play it).`;
     }
     return outcome;
+  }
+
+  /**
+   * Sonos accepts Play even for a track it can't load, then silently skips ahead or stops.
+   * Poll until the room is playing the expected queue track; otherwise explain what happened.
+   */
+  private async confirmPlaying(player: ZoneGroupInfo['coordinator'], trackNumber: number, uri: string): Promise<string | undefined> {
+    const sleep = this.deps.sleep ?? defaultSleep;
+    const share = /^x-file-cifs:(\/\/[^/]+)/.exec(uri)?.[1];
+    const cause = share ? ` The music library share (${share}) may be unreachable.` : ' Its source may be unavailable.';
+    let state: PlayState = 'unknown';
+    for (let attempt = 0; attempt < PLAY_CHECK_ATTEMPTS; attempt++) {
+      await sleep(PLAY_CHECK_INTERVAL_MS);
+      const playback = await this.gateway.getPlayback(player);
+      state = toPlayState(playback.state);
+      if (playback.trackNumber !== trackNumber) {
+        return `Sonos accepted the track but didn't play it: the room moved on to queue track ${playback.trackNumber} (${state}).${cause}`;
+      }
+      if (state === 'playing') return undefined;
+    }
+    const seconds = (PLAY_CHECK_INTERVAL_MS * PLAY_CHECK_ATTEMPTS) / 1000;
+    return state === 'transitioning'
+      ? `Playback hadn't started after ${seconds}s (still loading); check sonos_now_playing.`
+      : `Sonos accepted the track but didn't play it (still ${state} after ${seconds}s).${cause}`;
   }
 
   private async resolveTrack(

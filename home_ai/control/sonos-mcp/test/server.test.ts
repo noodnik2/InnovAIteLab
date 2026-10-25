@@ -4,12 +4,12 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createServer, describeStatus } from '../src/server.js';
 import { SonosService, type RoomStatus } from '../src/service.js';
-import { fakeGateway, kitchen, living, playback } from './fakes.js';
+import { fakeGateway, kitchen, living, onPlay, playback } from './fakes.js';
 
 let client: Client | undefined;
 
 async function connect(gateway = fakeGateway(), catalog = async () => [{ trackId: 1, title: 'Piano Man', artist: 'Billy Joel' }]) {
-  const service = new SonosService(gateway, { config: { appleMusicSerial: 20 }, searchCatalog: catalog });
+  const service = new SonosService(gateway, { config: { appleMusicSerial: 20 }, searchCatalog: catalog, sleep: async () => undefined });
   const server = createServer(service);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -77,13 +77,24 @@ describe('MCP server', () => {
   });
 
   it('adds to the queue and plays now', async () => {
-    const { client } = await connect();
+    const { client, gateway } = await connect();
     await call(client, 'sonos_search', { query: 'piano man', source: 'apple-music' });
     expect((await call(client, 'sonos_add_to_queue', { ref: 'apple:song:1', room: 'Kitchen' })).summary).toBe(
       'Added "Piano Man" to the Kitchen queue at position 4 of 11.',
     );
+    onPlay(gateway);
     expect((await call(client, 'sonos_add_to_queue', { ref: 'apple:song:1', room: 'Kitchen', mode: 'now' })).summary).toBe(
       'Now playing "Piano Man" in Kitchen (queue track 4 of 11).',
+    );
+  });
+
+  it('says when a "now" track did not actually start', async () => {
+    const { client, gateway } = await connect();
+    onPlay(gateway, { state: 'STOPPED', trackNumber: 1 });
+    const r = await call(client, 'sonos_add_to_queue', { ref: 'x-file-cifs://NAS/a.mp3', room: 'Kitchen', mode: 'now' });
+    expect(r.summary).toBe(
+      "Added Track to the Kitchen queue at position 4 of 11. Sonos accepted the track but didn't play it: " +
+        'the room moved on to queue track 1 (stopped). The music library share (//NAS) may be unreachable.',
     );
   });
 

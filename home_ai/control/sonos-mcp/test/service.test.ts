@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { SonosService, toPlayState, type ServiceDeps } from '../src/service.js';
-import { fakeGateway, groups, kitchen, living, playback } from './fakes.js';
+import { fakeGateway, groups, kitchen, living, onPlay, playback } from './fakes.js';
 
 function setup(options: { gateway?: ReturnType<typeof fakeGateway>; config?: ServiceDeps['config']; catalog?: ServiceDeps['searchCatalog'] } = {}) {
   const gateway = options.gateway ?? fakeGateway();
   const searchCatalog = vi.fn(options.catalog ?? (async () => []));
-  const service = new SonosService(gateway, { config: options.config ?? {}, searchCatalog });
-  return { gateway, searchCatalog, service };
+  const sleep = vi.fn(async () => undefined);
+  const service = new SonosService(gateway, { config: options.config ?? {}, searchCatalog, sleep });
+  return { gateway, searchCatalog, service, sleep };
 }
 
 const radio = 'x-sonosapi-stream:s24889?sid=254&flags=8224&sn=0';
@@ -251,16 +252,63 @@ describe('addToQueue', () => {
 
   it('plays immediately in "now" mode', async () => {
     const { service, gateway } = setup();
+    onPlay(gateway);
     const outcome = await service.addToQueue('x-file-cifs://NAS/w.mp3', { room: 'Kitchen', mode: 'now' });
     expect(outcome).toMatchObject({ playingNow: true, queuePosition: 4 });
+    expect(outcome.note).toBeUndefined();
     expect(gateway.switchToQueue).not.toHaveBeenCalled();
     expect(gateway.seekTrack).toHaveBeenCalledWith(kitchen, 4);
     expect(gateway.play).toHaveBeenCalledWith(kitchen);
     expect(gateway.enqueue.mock.calls[0]![1].metadata).toContain('<item id="-1" restricted="true">');
   });
 
+  it('waits through loading before confirming playback', async () => {
+    const { service, gateway, sleep } = setup();
+    onPlay(gateway, { state: 'TRANSITIONING', trackNumber: 4 });
+    sleep.mockImplementationOnce(async () => undefined).mockImplementationOnce(async () => {
+      gateway.getPlayback.mockResolvedValue(playback({ state: 'PLAYING', trackNumber: 4 }));
+    });
+    const outcome = await service.addToQueue('x-file-cifs://NAS/w.mp3', { room: 'Kitchen', mode: 'now' });
+    expect(outcome.playingNow).toBe(true);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports when Sonos skips past a track it cannot play', async () => {
+    const { service, gateway } = setup();
+    onPlay(gateway, { state: 'PLAYING', trackNumber: 5 });
+    const outcome = await service.addToQueue('x-file-cifs://SFR062/iTunes/a.mp3', { room: 'Kitchen', mode: 'now' });
+    expect(outcome.playingNow).toBe(false);
+    expect(outcome.note).toBe(
+      "Sonos accepted the track but didn't play it: the room moved on to queue track 5 (playing). " +
+        'The music library share (//SFR062) may be unreachable.',
+    );
+  });
+
+  it('reports when the room stays stopped on the track', async () => {
+    const { service, gateway, sleep } = setup({ config: { appleMusicSerial: 20 } });
+    onPlay(gateway, { state: 'STOPPED', trackNumber: 4 });
+    const outcome = await service.addToQueue('apple:song:1', { room: 'Kitchen', mode: 'now' });
+    expect(outcome).toMatchObject({ playingNow: false, note: "Sonos accepted the track but didn't play it (still stopped after 4s). Its source may be unavailable." });
+    expect(sleep).toHaveBeenCalledTimes(8);
+    expect(sleep).toHaveBeenCalledWith(500);
+  });
+
+  it('reports unconfirmed playback when still loading at the deadline', async () => {
+    const { service, gateway } = setup();
+    onPlay(gateway, { state: 'TRANSITIONING', trackNumber: 4 });
+    const outcome = await service.addToQueue('x-file-cifs://NAS/w.mp3', { room: 'Kitchen', mode: 'now' });
+    expect(outcome).toMatchObject({ playingNow: false, note: "Playback hadn't started after 4s (still loading); check sonos_now_playing." });
+  });
+
+  it('does not check playback outside "now" mode', async () => {
+    const { service, sleep } = setup();
+    await service.addToQueue('x-file-cifs://NAS/w.mp3', { room: 'Kitchen', mode: 'next' });
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
   it('switches to the queue first when playing something else', async () => {
     const gateway = fakeGateway({ [kitchen.host]: playback({ sourceUri: radio }) });
+    onPlay(gateway);
     const { service } = setup({ gateway });
     await service.addToQueue('x-file-cifs://NAS/w.mp3', { room: 'Kitchen', mode: 'now' });
     expect(gateway.switchToQueue).toHaveBeenCalledWith(kitchen);

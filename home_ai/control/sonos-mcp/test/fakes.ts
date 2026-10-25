@@ -37,3 +37,10 @@ export function fakeGateway(byHost: Record<string, PlaybackInfo> = {}): SonosGat
     pause: vi.fn(async () => undefined),
   };
 }
+
+/** Make `play` leave the room reporting `after` from then on (default: playing queue track 4, the fake enqueue's slot). */
+export function onPlay(gateway: ReturnType<typeof fakeGateway>, after: Partial<PlaybackInfo> = { state: 'PLAYING', trackNumber: 4 }): void {
+  gateway.play.mockImplementation(async () => {
+    gateway.getPlayback.mockResolvedValue(playback(after));
+  });
+}
